@@ -1,7 +1,19 @@
 #include "Renderer.h"
 #include <Walnut/Random.h>
 
+
+
 namespace RayMan {
+	namespace Utils {
+		static uint32_t ConvertToRGBA(const glm::vec4& color) {
+			uint8_t r = color.r * 255.0f;
+			uint8_t g = color.g * 255.0f;
+			uint8_t b = color.b * 255.0f;
+			uint8_t a = color.a * 255.0f;
+			return (a << 24) | (b << 16) | (g << 8) | r;
+		}
+	}
+
 	void Renderer::OnResize(uint32_t width, uint32_t height) {
 		if (!m_FinalImage) {
 			m_FinalImage = std::make_shared<Walnut::Image>(width, height, Walnut::ImageFormat::RGBA);
@@ -27,22 +39,21 @@ namespace RayMan {
 				coord = coord * 2.f - 1.f; // normalize to -1 -> 1
 
 				coord.x *= aspectRatio;
-
-				m_FinalImageData[x + y * m_FinalImage->GetWidth()] = PerPixel(coord);
+				auto color = PerPixel(coord);
+				color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
+				m_FinalImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(color); 
 			}
 		}
 
 		m_FinalImage->SetData(m_FinalImageData);
 	}
 
-	uint32_t Renderer::PerPixel(glm::vec2 coord) const {
+	glm::vec4 Renderer::PerPixel(glm::vec2 coord) const {
 
-		glm::vec3 rayDirection{coord, 1.f};
+		glm::vec3 rayDirection{coord, -1.f};
 		rayDirection = glm::normalize(rayDirection);
-		glm::vec3 rayOrigin{0, 0, -2.f};
-		float radius = 0.5f;
-		glm::vec3 lightDir{-2, -2, 2};
-		lightDir = glm::normalize(lightDir);
+		glm::vec3 rayOrigin{0, 0, 2.f};
+		float radius = m_Context.SphereRadius;
 
 		// ray/circle intersection formula for 2D:
 		// 
@@ -65,27 +76,21 @@ namespace RayMan {
 		float discriminant = b * b - 4.f * a * c;
 
 		if (discriminant < 0)
-			return 0xff000000;
+			return glm::vec4(0,0,0,1);
 
-		float t0 = (-b - std::sqrt(discriminant)) / (2.0f * a);
-		float t1 = (-b + std::sqrt(discriminant)) / (2.0f * a);
-
-		float nearest = std::fmin(t0, t1);
+		float nearest = (-b - std::sqrt(discriminant)) / (2.0f * a);
 
 		glm::vec3 hitPoint = rayOrigin + rayDirection * nearest;
 		
-		glm::vec3 normal = hitPoint - 0.0f;
-		normal = glm::normalize(normal);
+		glm::vec3 normal = glm::normalize(hitPoint - 0.0f);
 
-		float lightFactor = std::fmax(glm::dot(normal, -lightDir), 0);
+		glm::vec3 color{0};
 
-		glm::vec3 color{1,0,1};
-		color *= lightFactor;
+		for (const auto& light : m_Context.Lights) {
+			float lightFactor = std::fmax(glm::dot(normal, -glm::normalize(light.Direction)), 0);
+			color += m_Context.SphereColor * (light.Color * lightFactor);
+		}
 
-		uint8_t colR{uint8_t((color.r) * 255.0f)};
-		uint8_t colG{uint8_t((color.g) * 255.0f)};
-		uint8_t colB{uint8_t((color.b) * 255.0f)};
-
-		return 0xff000000 | (colB << 16) | (colG << 8) | colR;
+		return {color, 1};
 	}
 }

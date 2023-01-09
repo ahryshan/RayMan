@@ -5,6 +5,8 @@
 #include "Walnut/Random.h"
 #include "Walnut/Timer.h"
 
+#include "glm/gtc/type_ptr.hpp"
+
 #include "Renderer.h"
 
 namespace RayMan {
@@ -16,6 +18,22 @@ namespace RayMan {
 			ImGui::Text("Last render time: %.3fms", m_LastRenderTime);
 			if (ImGui::Button("Render")) {
 				Render();
+			}
+			ImGui::ColorEdit3("Sphere Color", &m_Renderer.Context().SphereColor[0]);
+
+			int i{0};
+			for (auto& light{m_Renderer.Context().Lights.begin()}; light < m_Renderer.Context().Lights.end(); light++) {
+				ImGui::PushID(i);
+				ImGui::ColorEdit3("Light Color", glm::value_ptr(light->Color));
+				ImGui::DragFloat3("Light Position", glm::value_ptr(light->Direction), 0.25f, -5, 5, "%.1f");
+				if (ImGui::Button("Remove light")) {
+					m_Renderer.Context().Lights.erase(light);
+				}
+				ImGui::PopID();
+				i++;
+			}
+			if (ImGui::Button("Add Light")) {
+				m_Renderer.Context().Lights.push_back(PointLight{glm::vec3{1,1,1}, glm::vec3{-1,-1,-1}});
 			}
 			ImGui::End();
 
@@ -33,6 +51,13 @@ namespace RayMan {
 			ImGui::PopStyleVar();
 
 			Render();
+		}
+
+		virtual void OnAttach() override {
+			m_Renderer.Context().Lights.push_back(PointLight{glm::vec3{1,1,1}, glm::vec3{-1,-1,-1}});
+			m_Renderer.Context().Lights.push_back(PointLight{glm::vec3{0.5f,0.5f,0.5f}, glm::vec3{1,1,1}});
+			m_Renderer.Context().SphereColor = glm::vec3{1,0,1};
+			m_Renderer.Context().SphereRadius = 0.5f;
 		}
 
 		void Render() {
