@@ -33,7 +33,7 @@ namespace RayMan {
 				i++;
 			}
 			if (ImGui::Button("Add Light")) {
-				m_Renderer.Context().Lights.push_back(PointLight{glm::vec3{1,1,1}, glm::vec3{-1,-1,-1}});
+				m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{1,1,1}, glm::vec3{-1,-1,-1}});
 			}
 			ImGui::End();
 
@@ -54,8 +54,8 @@ namespace RayMan {
 		}
 
 		virtual void OnAttach() override {
-			m_Renderer.Context().Lights.push_back(PointLight{glm::vec3{1,1,1}, glm::vec3{-1,-1,-1}});
-			m_Renderer.Context().Lights.push_back(PointLight{glm::vec3{0.5f,0.5f,0.5f}, glm::vec3{1,1,1}});
+			m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{1,1,1}, glm::vec3{-1,-1,-1}});
+			m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{0.5f,0.5f,0.5f}, glm::vec3{1,1,1}});
 			m_Renderer.Context().SphereColor = glm::vec3{1,0,1};
 			m_Renderer.Context().SphereRadius = 0.5f;
 		}

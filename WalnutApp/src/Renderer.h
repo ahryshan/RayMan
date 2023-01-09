@@ -8,7 +8,7 @@
 #include <Walnut/Image.h>
 
 namespace RayMan {
-	struct PointLight {
+	struct DirectionalLight {
 		glm::vec3 Color;
 		glm::vec3 Direction;
 	};
@@ -16,7 +16,7 @@ namespace RayMan {
 	struct RenderContext {
 		glm::vec3 SphereColor;
 		float SphereRadius;
-		std::vector<PointLight> Lights;
+		std::vector<DirectionalLight> Lights;
 	};
 
 	class Renderer {
