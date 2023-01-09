@@ -19,11 +19,22 @@ namespace RayMan {
 	}
 
 	void Renderer::Render() {
-		for (uint32_t i{0}; i < m_FinalImage->GetHeight() * m_FinalImage->GetWidth(); i++) {
-			m_FinalImageData[i] = Walnut::Random::UInt();
-			m_FinalImageData[i] |= 0xff000000;
+		for (uint32_t y{0}; y < m_FinalImage->GetHeight(); y++)
+		{
+			for (uint32_t x{0}; x < m_FinalImage->GetWidth(); x++) {
+				glm::vec2 coord{(float)x / (float)m_FinalImage->GetWidth(), (float)y / (float)m_FinalImage->GetHeight()};
+
+				m_FinalImageData[x + y * m_FinalImage->GetWidth()] = PerPixel(coord);
+			}
 		}
 
 		m_FinalImage->SetData(m_FinalImageData);
+	}
+
+	uint32_t Renderer::PerPixel(glm::vec2 coord) const {
+		uint8_t r = (uint8_t)(coord.x * 255.f);
+		uint8_t g = (uint8_t)(coord.y * 255.f);
+
+		return 0xff000000 | (g << 8) | r;
 	}
 }

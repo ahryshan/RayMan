@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <glm/glm.hpp>
+
 #include <Walnut/Image.h>
 
 namespace RayMan {
@@ -13,6 +15,9 @@ namespace RayMan {
 		void Render();
 
 		inline const std::shared_ptr<Walnut::Image>& GetFinalImage() const { return m_FinalImage; }
+
+	private:
+		uint32_t PerPixel(glm::vec2 coord) const;
 
 	private:
 		std::shared_ptr<Walnut::Image> m_FinalImage{nullptr};
