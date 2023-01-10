@@ -82,13 +82,15 @@ namespace RayMan {
 
 		glm::vec3 hitPoint = rayOrigin + rayDirection * nearest;
 		
-		glm::vec3 normal = glm::normalize(hitPoint - 0.0f);
+		glm::vec3 normal = glm::normalize(hitPoint);
 
 		glm::vec3 color{0};
 
 		for (const auto& light : m_Context.Lights) {
-			float lightFactor = std::fmax(glm::dot(normal, -glm::normalize(light.Direction)), 0);
-			color += m_Context.SphereColor * (light.Color * lightFactor);
+			auto lightDir = light.Direction();
+			auto normalizedLight{glm::normalize(lightDir)};
+			float lightFactor = std::fmax(glm::dot(normal, normalizedLight), 0);
+			color += m_Context.SphereColor * (light.Color() * lightFactor);
 		}
 
 		return {color, 1};

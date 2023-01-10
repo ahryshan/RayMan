@@ -7,11 +7,9 @@
 
 #include <Walnut/Image.h>
 
+#include "DirectionalLight.h"
+
 namespace RayMan {
-	struct DirectionalLight {
-		glm::vec3 Color;
-		glm::vec3 Direction;
-	};
 
 	struct RenderContext {
 		glm::vec3 SphereColor;

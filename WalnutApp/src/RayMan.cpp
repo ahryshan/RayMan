@@ -24,16 +24,24 @@ namespace RayMan {
 			int i{0};
 			for (auto& light{m_Renderer.Context().Lights.begin()}; light < m_Renderer.Context().Lights.end(); light++) {
 				ImGui::PushID(i);
-				ImGui::ColorEdit3("Light Color", glm::value_ptr(light->Color));
-				ImGui::DragFloat3("Light Position", glm::value_ptr(light->Direction), 0.25f, -5, 5, "%.1f");
+
+				auto newRotation{light->Rotation()};
+
+				ImGui::ColorEdit3("Light Color", glm::value_ptr(light->Color()));
+				ImGui::DragFloat("Light Rotation Yaw", &newRotation[0], 1, 0, 0, "%.1f");
+				ImGui::DragFloat("Light Rotation Pitch", &newRotation[1], 1, 0, 180, "%.1f");
 				if (ImGui::Button("Remove light")) {
 					m_Renderer.Context().Lights.erase(light);
 				}
+
+				if (newRotation != light->Rotation())
+					light->SetRotation(newRotation);
+
 				ImGui::PopID();
 				i++;
 			}
 			if (ImGui::Button("Add Light")) {
-				m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{1,1,1}, glm::vec3{-1,-1,-1}});
+				m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{1}});
 			}
 			ImGui::End();
 
@@ -54,8 +62,7 @@ namespace RayMan {
 		}
 
 		virtual void OnAttach() override {
-			m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{1,1,1}, glm::vec3{-1,-1,-1}});
-			m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{0.5f,0.5f,0.5f}, glm::vec3{1,1,1}});
+			m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{1,1,1}});
 			m_Renderer.Context().SphereColor = glm::vec3{1,0,1};
 			m_Renderer.Context().SphereRadius = 0.5f;
 		}
