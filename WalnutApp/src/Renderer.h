@@ -24,11 +24,25 @@ namespace RayMan {
 		inline const std::shared_ptr<Walnut::Image>& GetFinalImage() const { return m_FinalImage; }
 
 	private:
-		glm::vec4 TraceRay(const Scene& scene, const Ray& ray) const;
+		struct HitPayload {
+			float HitDistance;
+			glm::vec3 WorldPosition;
+			glm::vec3 WorlNormal;
+
+			uint32_t ObjectIndex;
+		};
+
+		glm::vec4 RayGen(uint32_t x, uint32_t y);
+		HitPayload TraceRay(const Ray& ray);
+		HitPayload ClosestHit(const Ray& ray, float hitDistance, uint32_t objectIndex);
+		HitPayload Miss(const Ray& ray);
 
 	private:
 		std::shared_ptr<Walnut::Image> m_FinalImage{nullptr};
 		uint32_t* m_FinalImageData{nullptr};
+
+		const Scene* m_ActiveScene;
+		const Camera* m_ActiveCamera;
 	};
 }
 
