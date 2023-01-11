@@ -16,7 +16,7 @@ namespace RayMan {
 		inline const glm::vec2& Rotation() const { return m_Rotation; }
 		void SetRotation(const glm::vec2 rotation);
 
-		const glm::vec3& Direction() const;
+		inline const glm::vec3& Direction() const { return m_Direction; }
 
 	private:
 		glm::vec2 m_Rotation;

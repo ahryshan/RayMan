@@ -45,6 +45,13 @@ namespace RayMan {
 			}
 			ImGui::End();
 
+			ImGui::Begin("Camera Stats");
+			glm::vec3 cameraPos{m_Camera.Position()};
+			ImGui::Text("Camera Position: %.2f %.2f %.2f", cameraPos.x, cameraPos.y, cameraPos.z);
+			glm::vec3 cameraDir{m_Camera.ForwardDirection()};
+			ImGui::Text("Camera Position: %.2f %.2f %.2f", cameraDir.x, cameraDir.y, cameraDir.z);
+			ImGui::End();
+
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
 			ImGui::Begin("Viewport");
 
@@ -67,11 +74,16 @@ namespace RayMan {
 			m_Renderer.Context().SphereRadius = 0.5f;
 		}
 
+		virtual void OnUpdate(float ts) override {
+			m_Camera.OnUpdate(ts);
+		}
+
 		void Render() {
 			Walnut::Timer timer;
 
 			m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
-			m_Renderer.Render();
+			m_Camera.OnResize(m_ViewportWidth, m_ViewportHeight);
+			m_Renderer.Render(m_Camera);
 
 			m_LastRenderTime = timer.ElapsedMillis();
 		}
@@ -80,6 +92,7 @@ namespace RayMan {
 		float m_LastRenderTime{0};
 		uint32_t m_ViewportWidth{0}, m_ViewportHeight{0};
 		Renderer m_Renderer;
+		Camera m_Camera;
 	};
 }
 

@@ -17,8 +17,4 @@ namespace RayMan {
 		transform *= glm::rotate(glm::mat4(1), glm::radians(rotation.y), glm::vec3(0, 0, 1));
 		m_Direction = glm::normalize(transform[1]);
 	}
-
-	const glm::vec3& DirectionalLight::Direction() const {
-		return m_Direction;
-	}
 }
