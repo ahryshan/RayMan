@@ -14,15 +14,40 @@ namespace RayMan {
 	public:
 
 		virtual void OnUIRender() override {
-			ImGui::Begin("Settings");
+			ImGui::Begin("Scene settings");
 			ImGui::Text("Last render time: %.3fms", m_LastRenderTime);
-			if (ImGui::Button("Render")) {
-				Render();
-			}
-			ImGui::ColorEdit3("Sphere Color", &m_Renderer.Context().SphereColor[0]);
+
+			ImGui::NewLine();
+
+			ImGui::ColorEdit3("Ambient color", glm::value_ptr(m_Scene.AmbientLight));
+
+			ImGui::NewLine();
 
 			int i{0};
-			for (auto& light{m_Renderer.Context().Lights.begin()}; light < m_Renderer.Context().Lights.end(); light++) {
+			for (auto& sphere{m_Scene.Spheres.begin()}; sphere < m_Scene.Spheres.end(); sphere++) {
+				ImGui::PushID(i);
+
+				ImGui::ColorEdit3("Sphere Color", glm::value_ptr(sphere->Albedo));
+				ImGui::DragFloat3("Sphere Position", glm::value_ptr(sphere->Position), 0.1f, -100.0f, 100.0f, "%.2f");
+				ImGui::DragFloat("Sphere Radius", &sphere->Radius, 0.01f, 0.05f, 100.0f, "%.2f");
+
+				if (ImGui::Button("Delete Sphere"))
+					m_Scene.Spheres.erase(sphere);
+
+				ImGui::NewLine();
+
+				ImGui::PopID();
+				i++;
+			}
+
+			if (ImGui::Button("Add Sphere")) {
+				m_Scene.Spheres.push_back(Sphere{glm::vec3{0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, 0.5f});
+			}
+
+			ImGui::NewLine();
+
+			i = 0;
+			for (auto& light{m_Scene.DirectionalLights.begin()}; light < m_Scene.DirectionalLights.end(); light++) {
 				ImGui::PushID(i);
 
 				auto newRotation{light->Rotation()};
@@ -30,19 +55,22 @@ namespace RayMan {
 				ImGui::ColorEdit3("Light Color", glm::value_ptr(light->Color()));
 				ImGui::DragFloat("Light Rotation Yaw", &newRotation[0], 1, 0, 0, "%.1f");
 				ImGui::DragFloat("Light Rotation Pitch", &newRotation[1], 1, 0, 180, "%.1f");
-				if (ImGui::Button("Remove light")) {
-					m_Renderer.Context().Lights.erase(light);
+				light->SetRotation(newRotation);
+
+				if (ImGui::Button("Delete Light")) {
+					m_Scene.DirectionalLights.erase(light);
 				}
 
-				if (newRotation != light->Rotation())
-					light->SetRotation(newRotation);
+				ImGui::NewLine();
 
 				ImGui::PopID();
 				i++;
 			}
+
 			if (ImGui::Button("Add Light")) {
-				m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{1}});
+				m_Scene.DirectionalLights.push_back(DirectionalLight{glm::vec3{1}});
 			}
+
 			ImGui::End();
 
 			ImGui::Begin("Camera Stats");
@@ -69,9 +97,29 @@ namespace RayMan {
 		}
 
 		virtual void OnAttach() override {
-			m_Renderer.Context().Lights.push_back(DirectionalLight{glm::vec3{1,1,1}});
-			m_Renderer.Context().SphereColor = glm::vec3{1,0,1};
-			m_Renderer.Context().SphereRadius = 0.5f;
+			m_Scene.DirectionalLights.push_back(DirectionalLight{glm::vec3{1,1,1}});
+			{
+				Sphere sphere{};
+				sphere.Albedo = {0.8f, 0.3f, 0.3f};
+				sphere.Position = {2.0f, 0.0f, 0.0f};
+				sphere.Radius = 0.5f;
+				m_Scene.Spheres.push_back(sphere);
+			}
+			{
+				Sphere sphere{};
+				sphere.Albedo = {0.3f, 0.8f, 0.3f};
+				sphere.Position = {0.0f, 0.0f, 0.0f};
+				sphere.Radius = 0.5f;
+				m_Scene.Spheres.push_back(sphere);
+			}
+			{
+				Sphere sphere{};
+				sphere.Albedo = {0.3f, 0.3f, 0.8f};
+				sphere.Position = {-2.0f, 0.0f, 0.0f};
+				sphere.Radius = 0.5f;
+				m_Scene.Spheres.push_back(sphere);
+			}
+			m_Scene.AmbientLight = glm::vec3{0.05f, 0.025f, 0.05f};
 		}
 
 		virtual void OnUpdate(float ts) override {
@@ -83,7 +131,7 @@ namespace RayMan {
 
 			m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
 			m_Camera.OnResize(m_ViewportWidth, m_ViewportHeight);
-			m_Renderer.Render(m_Camera);
+			m_Renderer.Render(m_Scene, m_Camera);
 
 			m_LastRenderTime = timer.ElapsedMillis();
 		}
@@ -93,6 +141,7 @@ namespace RayMan {
 		uint32_t m_ViewportWidth{0}, m_ViewportHeight{0};
 		Renderer m_Renderer;
 		Camera m_Camera;
+		Scene m_Scene;
 	};
 }
 

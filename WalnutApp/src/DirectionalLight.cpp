@@ -11,6 +11,9 @@ namespace RayMan {
 	}
 
 	void DirectionalLight::SetRotation(const glm::vec2 rotation) {
+		if (rotation == m_Rotation)
+			return;
+
 		m_Rotation = rotation;
 		glm::mat4 transform{1};
 		transform *= glm::rotate(glm::mat4(1), glm::radians(rotation.x), glm::vec3(0, 1, 0));
