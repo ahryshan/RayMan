@@ -6,11 +6,12 @@
 
 #include "DirectionalLight.h"
 #include "Sphere.h"
+#include "Material.h"
 
 namespace RayMan {
 	struct Scene {
 		std::vector<Sphere> Spheres;
 		std::vector<DirectionalLight> DirectionalLights;
-		glm::vec3 AmbientLight;
+		std::vector<Material> Materials;
 	};
 }

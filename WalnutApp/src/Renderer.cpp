@@ -53,34 +53,36 @@ namespace RayMan {
 		ray.Origin = m_ActiveCamera->Position();
 		ray.Direction = m_ActiveCamera->RayDirections()[x + y * m_FinalImage->GetWidth()];
 
-		glm::vec3 color{m_ActiveScene->AmbientLight};
+		glm::vec3 color{};
 		float scalar{1.0f};
 
-		int bounces{2};
+		int bounces{5};
 		for (int i{0}; i < bounces; i++) {
 			Renderer::HitPayload payload = TraceRay(ray);
 			if (payload.HitDistance < 0.0f) {
-				glm::vec3 bgUpColor{0.2, 0.1, 0.3};
-				glm::vec3 bgDownColor{0.0,0.0,0.1};
+				glm::vec3 bgUpColor{0.6, 0.7, 0.9};
+				glm::vec3 bgDownColor{0.6, 0.7, 0.9};
+				//glm::vec3 bgDownColor{0.0,0.0,0.1};
 				float t{glm::clamp(ray.Direction.y * 0.5f + 0.5f, 0.0f, 1.0f)};
 				color += glm::vec3{t * bgUpColor + (1 - t) * bgDownColor} * scalar;
 				break;
 			}
 
 			const Sphere& closestSphere = m_ActiveScene->Spheres[payload.ObjectIndex];
+			const Material& material{m_ActiveScene->Materials.at(closestSphere.MaterialIndex)};
 
 
 			for (const auto& light : m_ActiveScene->DirectionalLights) {
 				auto lightDir = light.Direction();
 				auto normalizedLight{glm::normalize(lightDir)};
 				float lightFactor = std::fmax(glm::dot(payload.WorlNormal, normalizedLight), 0);
-				color += closestSphere.Albedo * (light.Color() * lightFactor) * scalar;
+					color += material.Albedo * (light.Color() * lightFactor) * scalar;
 			}
 
-			scalar *= 0.7f;
+			scalar *= 0.5f;
 
 			ray.Origin = payload.WorldPosition + payload.WorlNormal * 0.0001f;
-			ray.Direction = glm::reflect(ray.Direction, payload.WorlNormal);
+			ray.Direction = glm::reflect(ray.Direction, (payload.WorlNormal + (material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f))));
 		}
 
 		
