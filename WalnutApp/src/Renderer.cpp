@@ -1,4 +1,7 @@
 #include "Renderer.h"
+
+#include <execution>
+
 #include <Walnut/Random.h>
 
 
@@ -17,8 +20,19 @@ namespace RayMan {
 	void Renderer::OnResize(uint32_t width, uint32_t height) {
 		if (!m_FinalImage) {
 			m_FinalImage = std::make_shared<Walnut::Image>(width, height, Walnut::ImageFormat::RGBA);
+
 			delete[] m_FinalImageData;
 			m_FinalImageData = new uint32_t[width * height];
+
+			delete[] m_AccumulationData;
+			m_AccumulationData = new glm::vec4[width * height]{};
+
+			m_VerticalIter.resize(height);
+			m_HorizontalIter.resize(width);
+			for (uint32_t i{0}; i < width; i++)
+				m_HorizontalIter[i] = i;
+			for (uint32_t i{0}; i < height; i++)
+				m_VerticalIter[i] = i;
 		}
 
 		if (m_FinalImage->GetHeight() == height && m_FinalImage->GetWidth() == width)
@@ -28,21 +42,61 @@ namespace RayMan {
 
 		delete[] m_FinalImageData;
 		m_FinalImageData = new uint32_t[width * height];
+
+		delete[] m_AccumulationData;
+		m_AccumulationData = new glm::vec4[width * height];
+
+		m_VerticalIter.resize(height);
+		m_HorizontalIter.resize(width);
+		for (uint32_t i{0}; i < width; i++)
+			m_HorizontalIter[i] = i;
+		for (uint32_t i{0}; i < height; i++)
+			m_VerticalIter[i] = i;
 	}
 
 	void Renderer::Render(const Scene& scene, const Camera& camera) {
 		m_ActiveCamera = &camera;
 		m_ActiveScene = &scene;
+		if (m_FrameIndex == 1)
+			memset(m_AccumulationData, 0, m_FinalImage->GetHeight() * m_FinalImage->GetWidth() * sizeof(glm::vec4));
 
+#define MT 1
+#if MT
+		std::for_each(std::execution::par,m_VerticalIter.begin(), m_VerticalIter.end(), [this](uint32_t y) {
+			std::for_each(std::execution::par, m_HorizontalIter.begin(), m_HorizontalIter.end(), [this, y](uint32_t x) {
+				glm::vec4 color = RayGen(x, y);
+
+				m_AccumulationData[x + y * m_FinalImage->GetWidth()] += color;
+
+				glm::vec4 accumulatedColor = m_AccumulationData[x + y * m_FinalImage->GetWidth()];
+				accumulatedColor /= (float)m_FrameIndex;
+				accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+				m_FinalImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulatedColor);
+			});
+		});
+#else
 		for (uint32_t y{0}; y < m_FinalImage->GetHeight(); y++) {
 			for (uint32_t x{0}; x < m_FinalImage->GetWidth(); x++) {
-				auto color = RayGen(x, y);
-				color = glm::clamp(color, glm::vec4{0.0f}, glm::vec4{1.0f});
-				m_FinalImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(color);
+				glm::vec4 color = RayGen(x, y);
+
+				m_AccumulationData[x + y * m_FinalImage->GetWidth()] += color;
+
+				glm::vec4 accumulatedColor = m_AccumulationData[x + y * m_FinalImage->GetWidth()];
+				accumulatedColor /= (float)m_FrameIndex;
+				accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+				m_FinalImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulatedColor);
 			}
 		}
+#endif
+
 
 		m_FinalImage->SetData(m_FinalImageData);
+
+		if (m_Settings.Accumulate) {
+			m_FrameIndex++;
+		} else {
+			m_FrameIndex = 1;
+		}
 
 		m_ActiveCamera = nullptr;
 		m_ActiveScene = nullptr;
@@ -56,7 +110,7 @@ namespace RayMan {
 		glm::vec3 color{};
 		float scalar{1.0f};
 
-		int bounces{5};
+		int bounces{3};
 		for (int i{0}; i < bounces; i++) {
 			Renderer::HitPayload payload = TraceRay(ray);
 			if (payload.HitDistance < 0.0f) {
@@ -64,7 +118,7 @@ namespace RayMan {
 				glm::vec3 bgDownColor{0.6, 0.7, 0.9};
 				//glm::vec3 bgDownColor{0.0,0.0,0.1};
 				float t{glm::clamp(ray.Direction.y * 0.5f + 0.5f, 0.0f, 1.0f)};
-				color += glm::vec3{t * bgUpColor + (1 - t) * bgDownColor} * scalar;
+				color += glm::vec3{t * bgUpColor + (1 - t) * bgDownColor} *scalar;
 				break;
 			}
 
@@ -76,7 +130,7 @@ namespace RayMan {
 				auto lightDir = light.Direction();
 				auto normalizedLight{glm::normalize(lightDir)};
 				float lightFactor = std::fmax(glm::dot(payload.WorlNormal, normalizedLight), 0);
-					color += material.Albedo * (light.Color() * lightFactor) * scalar;
+				color += material.Albedo * (light.Color() * lightFactor) * scalar;
 			}
 
 			scalar *= 0.5f;
@@ -85,7 +139,7 @@ namespace RayMan {
 			ray.Direction = glm::reflect(ray.Direction, (payload.WorlNormal + (material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f))));
 		}
 
-		
+
 
 
 		return {color, 1.0f};

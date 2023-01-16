@@ -75,6 +75,8 @@ namespace RayMan {
 			RecalculateView();
 			RecalculateRayDirections();
 		}
+
+		return moved;
 	}
 
 	void Camera::OnResize(uint32_t width, uint32_t height) {

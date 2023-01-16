@@ -17,6 +17,13 @@ namespace RayMan {
 	public:
 
 		virtual void OnUIRender() override {
+			ImGui::Begin("Render settings");
+			ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
+			if (ImGui::Button("Reset Render")) {
+				m_Renderer.ResetFrameAccumulation();
+			}
+			ImGui::End();
+
 			ImGui::Begin("Scene settings");
 
 			if (ImGui::CollapsingHeader("Objects")) {
@@ -105,8 +112,12 @@ namespace RayMan {
 
 			ImGui::End();
 
-			ImGui::Begin("Scene Stats");
+			ImGui::Begin("Render Stats");
 			ImGui::Text("Last render time: %.3fms", m_LastRenderTime);
+			ImGui::Text("Frame index: %d", m_Renderer.FrameIndex());
+			ImGui::End();
+
+			ImGui::Begin("Scene Stats");
 			glm::vec3 cameraPos{m_Camera.Position()};
 			ImGui::Text("Camera Position: %.2f %.2f %.2f", cameraPos.x, cameraPos.y, cameraPos.z);
 			glm::vec3 cameraDir{m_Camera.ForwardDirection()};
@@ -159,7 +170,8 @@ namespace RayMan {
 		}
 
 		virtual void OnUpdate(float ts) override {
-			m_Camera.OnUpdate(ts);
+			if (m_Camera.OnUpdate(ts))
+				m_Renderer.ResetFrameAccumulation();
 		}
 
 		void Render() {
