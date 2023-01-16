@@ -55,6 +55,9 @@ namespace RayMan {
 	}
 
 	void Renderer::Render(const Scene& scene, const Camera& camera) {
+		if (m_Settings.Pause)
+			return;
+
 		m_ActiveCamera = &camera;
 		m_ActiveScene = &scene;
 		if (m_FrameIndex == 1)
@@ -106,12 +109,15 @@ namespace RayMan {
 		Ray ray;
 		ray.Origin = m_ActiveCamera->Position();
 		ray.Direction = m_ActiveCamera->RayDirections()[x + y * m_FinalImage->GetWidth()];
+		if (m_Settings.Antialising)
+			ray.Direction += Walnut::Random::Vec3(-0.001f, 0.001f);
 
 		glm::vec3 color{};
 		float scalar{1.0f};
 
 		int bounces{3};
 		for (int i{0}; i < bounces; i++) {
+
 			Renderer::HitPayload payload = TraceRay(ray);
 			if (payload.HitDistance < 0.0f) {
 				glm::vec3 bgUpColor{0.6, 0.7, 0.9};

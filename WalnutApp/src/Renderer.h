@@ -18,6 +18,8 @@ namespace RayMan {
 	public:
 		struct Settings {
 			bool Accumulate = true;
+			bool Pause = false;
+			bool Antialising = true;
 		};
 
 	public:

@@ -19,6 +19,8 @@ namespace RayMan {
 		virtual void OnUIRender() override {
 			ImGui::Begin("Render settings");
 			ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
+			ImGui::Checkbox("Pause Rendering", &m_Renderer.GetSettings().Pause);
+			ImGui::Checkbox("Antialising", &m_Renderer.GetSettings().Antialising);
 			if (ImGui::Button("Reset Render")) {
 				m_Renderer.ResetFrameAccumulation();
 			}
