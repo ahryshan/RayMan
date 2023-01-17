@@ -65,18 +65,18 @@ namespace RayMan {
 
 #define MT 1
 #if MT
-		std::for_each(std::execution::par,m_VerticalIter.begin(), m_VerticalIter.end(), [this](uint32_t y) {
+		std::for_each(std::execution::par, m_VerticalIter.begin(), m_VerticalIter.end(), [this](uint32_t y) {
 			std::for_each(std::execution::par, m_HorizontalIter.begin(), m_HorizontalIter.end(), [this, y](uint32_t x) {
 				glm::vec4 color = RayGen(x, y);
 
-				m_AccumulationData[x + y * m_FinalImage->GetWidth()] += color;
+		m_AccumulationData[x + y * m_FinalImage->GetWidth()] += color;
 
-				glm::vec4 accumulatedColor = m_AccumulationData[x + y * m_FinalImage->GetWidth()];
-				accumulatedColor /= (float)m_FrameIndex;
-				accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
-				m_FinalImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulatedColor);
+		glm::vec4 accumulatedColor = m_AccumulationData[x + y * m_FinalImage->GetWidth()];
+		accumulatedColor /= (float)m_FrameIndex;
+		accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+		m_FinalImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulatedColor);
+				});
 			});
-		});
 #else
 		for (uint32_t y{0}; y < m_FinalImage->GetHeight(); y++) {
 			for (uint32_t x{0}; x < m_FinalImage->GetWidth(); x++) {
@@ -115,16 +115,22 @@ namespace RayMan {
 		glm::vec3 color{};
 		float scalar{1.0f};
 
-		int bounces{3};
+		glm::vec3 skyLightBaseColor{m_ActiveScene->SkyLightBaseColor};
+		glm::vec3 skyLightSecondaryColor{m_ActiveScene->SkyLightSecondaryColor};
+
+		int bounces{m_Settings.Bounce};
 		for (int i{0}; i < bounces; i++) {
+			glm::vec3 tempColor{0.0f};
 
 			Renderer::HitPayload payload = TraceRay(ray);
+
+			glm::vec3 ambientLight{0.55, 0.5, 0.9}; 
+			float skyDarkening{0.5};
+			float t{glm::clamp(ray.Direction.y * 0.5f + 0.5f, 0.0f, 1.0f)};
+			glm::vec3 skyLight{t * skyLightBaseColor + (1 - t) * skyLightSecondaryColor};
+
 			if (payload.HitDistance < 0.0f) {
-				glm::vec3 bgUpColor{0.6, 0.7, 0.9};
-				glm::vec3 bgDownColor{0.6, 0.7, 0.9};
-				//glm::vec3 bgDownColor{0.0,0.0,0.1};
-				float t{glm::clamp(ray.Direction.y * 0.5f + 0.5f, 0.0f, 1.0f)};
-				color += glm::vec3{t * bgUpColor + (1 - t) * bgDownColor} *scalar;
+				color += skyLight * scalar;
 				break;
 			}
 
@@ -133,11 +139,16 @@ namespace RayMan {
 
 
 			for (const auto& light : m_ActiveScene->DirectionalLights) {
+				if (m_Settings.CastShadows && CheckShadow(payload.WorldPosition, light))
+					continue;
+
 				auto lightDir = light.Direction();
 				auto normalizedLight{glm::normalize(lightDir)};
 				float lightFactor = std::fmax(glm::dot(payload.WorlNormal, normalizedLight), 0);
-				color += material.Albedo * (light.Color() * lightFactor) * scalar;
+				tempColor += material.Albedo * (light.Color() * lightFactor) * scalar;
 			}
+
+			color += tempColor;
 
 			scalar *= 0.5f;
 
@@ -145,17 +156,10 @@ namespace RayMan {
 			ray.Direction = glm::reflect(ray.Direction, (payload.WorlNormal + (material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f))));
 		}
 
-
-
-
 		return {color, 1.0f};
 	}
 
 	Renderer::HitPayload Renderer::TraceRay(const Ray& ray) {
-		glm::vec4 bgUpColor{0.2, 0.1, 0.3, 1.0f};
-		glm::vec4 bgDownColor{0.0,0.0,0.1,1.0f};
-		float t{glm::clamp(ray.Direction.y * 0.5f + 0.5f, 0.0f, 1.0f)};
-		glm::vec4 bgColor{t * bgUpColor + (1 - t) * bgDownColor};
 
 		if (m_ActiveScene->Spheres.size() == 0)
 			return Miss(ray);
@@ -208,5 +212,37 @@ namespace RayMan {
 		HitPayload payload;
 		payload.HitDistance = -1.0f;
 		return payload;
+	}
+
+	bool Renderer::CheckShadow(const glm::vec3& hitPosition, const DirectionalLight& light) {
+		Ray ray{hitPosition, (light.Direction() + Walnut::Random::Vec3(-0.1f, 0.1f))};
+
+		if (m_ActiveScene->Spheres.size() == 0)
+			return false;
+
+		int closestSphereIndex{-1};
+		for (uint32_t i{0}; i < m_ActiveScene->Spheres.size(); i++) {
+			const Sphere& sphere = m_ActiveScene->Spheres[i];
+			glm::vec3 origin{ray.Origin - sphere.Position};
+
+			float a = glm::dot(ray.Direction, ray.Direction);
+			float b = 2.0f * glm::dot(origin, ray.Direction);
+			float c = glm::dot(origin, origin) - sphere.Radius * sphere.Radius;
+
+			float discriminant = b * b - 4.f * a * c;
+
+			if (discriminant < 0)
+				continue;
+
+			float nearestT = (-b - std::sqrt(discriminant)) / (2.0f * a);
+			if (nearestT > 0.0f) {
+				return true;
+			}
+		}
+
+		if (closestSphereIndex == -1)
+			return false;
+
+		return true;
 	}
 }

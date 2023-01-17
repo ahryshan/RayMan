@@ -17,9 +17,11 @@ namespace RayMan {
 	class Renderer {
 	public:
 		struct Settings {
-			bool Accumulate = true;
+			bool Accumulate = false;
 			bool Pause = false;
-			bool Antialising = true;
+			bool Antialising = false;
+			bool CastShadows = true;
+			int Bounce = 2;
 		};
 
 	public:
@@ -29,6 +31,7 @@ namespace RayMan {
 		void Render(const Scene& scene, const Camera& camera);
 
 		inline const std::shared_ptr<Walnut::Image>& GetFinalImage() const { return m_FinalImage; }
+		inline const uint32_t* GetImageData() const { return m_FinalImageData; }
 		inline uint32_t FrameIndex() const { return m_FrameIndex; }
 		inline void ResetFrameAccumulation() { m_FrameIndex = 1; }
 		inline Settings& GetSettings() { return m_Settings; }
@@ -46,6 +49,7 @@ namespace RayMan {
 		HitPayload TraceRay(const Ray& ray);
 		HitPayload ClosestHit(const Ray& ray, float hitDistance, uint32_t objectIndex);
 		HitPayload Miss(const Ray& ray);
+		bool CheckShadow(const glm::vec3& hitPosition, const DirectionalLight& light);
 
 	private:
 		const Scene* m_ActiveScene;

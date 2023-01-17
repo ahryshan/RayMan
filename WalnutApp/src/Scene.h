@@ -13,5 +13,8 @@ namespace RayMan {
 		std::vector<Sphere> Spheres;
 		std::vector<DirectionalLight> DirectionalLights;
 		std::vector<Material> Materials;
+
+		glm::vec3 SkyLightBaseColor;
+		glm::vec3 SkyLightSecondaryColor;
 	};
 }

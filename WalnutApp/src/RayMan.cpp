@@ -11,6 +11,7 @@
 
 #include "Renderer.h"
 #include "GuiElements.h"
+#include "FileIO.h"
 
 namespace RayMan {
 	class RayManLayer : public Walnut::Layer {
@@ -21,12 +22,24 @@ namespace RayMan {
 			ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
 			ImGui::Checkbox("Pause Rendering", &m_Renderer.GetSettings().Pause);
 			ImGui::Checkbox("Antialising", &m_Renderer.GetSettings().Antialising);
+			ImGui::Checkbox("Cast Shadows", &m_Renderer.GetSettings().CastShadows);
+			ImGui::InputInt("Bounces", &m_Renderer.GetSettings().Bounce);
 			if (ImGui::Button("Reset Render")) {
 				m_Renderer.ResetFrameAccumulation();
+			}
+			if (ImGui::Button("Export Image")) {
+				FileIO::WriteImage("image.ppm", m_ViewportWidth, m_ViewportHeight, m_Renderer.GetImageData());
 			}
 			ImGui::End();
 
 			ImGui::Begin("Scene settings");
+
+			if (ImGui::CollapsingHeader("Scene Properties")) {
+				ImGui::ColorEdit3("Sky Sphere Up", glm::value_ptr(m_Scene.SkyLightBaseColor));
+				ImGui::ColorEdit3("Sky Sphere Down", glm::value_ptr(m_Scene.SkyLightSecondaryColor));
+			}
+
+			ImGui::Separator();
 
 			if (ImGui::CollapsingHeader("Objects")) {
 				int i{0};
@@ -146,6 +159,8 @@ namespace RayMan {
 			DirectionalLight light{glm::vec3{1.0f}};
 			light.SetRotation(glm::vec2{112.0f, 50.0f});
 
+			m_Scene.Materials.push_back(Material::Rough());
+
 			Material reflective{Material::Reflective()};
 			reflective.Albedo = glm::vec3{1.0f, 0.0f, 1.0f};
 			m_Scene.Materials.push_back(reflective);
@@ -166,9 +181,12 @@ namespace RayMan {
 				Sphere sphere{};
 				sphere.Position = {0.0f, -100.6f, 0.0f};
 				sphere.Radius = 100.0f;
-				sphere.MaterialIndex = 1;
+				sphere.MaterialIndex = 0;
 				m_Scene.Spheres.push_back(sphere);
 			}
+
+			m_Scene.SkyLightBaseColor = {0.1f, 0.2f, 0.7f};
+			m_Scene.SkyLightBaseColor = {0.4f, 0.5f, 0.9f};
 		}
 
 		virtual void OnUpdate(float ts) override {
