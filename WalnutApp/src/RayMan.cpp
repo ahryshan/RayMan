@@ -19,17 +19,7 @@ namespace RayMan {
 
 		virtual void OnUIRender() override {
 			ImGui::Begin("Render settings");
-			ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
-			ImGui::Checkbox("Pause Rendering", &m_Renderer.GetSettings().Pause);
-			ImGui::Checkbox("Antialising", &m_Renderer.GetSettings().Antialising);
-			ImGui::Checkbox("Cast Shadows", &m_Renderer.GetSettings().CastShadows);
-			ImGui::InputInt("Bounces", &m_Renderer.GetSettings().Bounce);
-			if (ImGui::Button("Reset Render")) {
-				m_Renderer.ResetFrameAccumulation();
-			}
-			if (ImGui::Button("Export Image")) {
-				FileIO::WriteImage("image.ppm", m_ViewportWidth, m_ViewportHeight, m_Renderer.GetImageData());
-			}
+			UI::RenderConfiguration(m_Renderer, m_RenderPipelines, m_CurrentRenderPipeline, m_StaticRenderInProgress);
 			ImGui::End();
 
 			ImGui::Begin("Scene settings");
@@ -47,7 +37,7 @@ namespace RayMan {
 					ImGui::PushID(i);
 					std::string nodeTitle{std::format("Sphere #{}", i + 1)};
 					if (ImGui::TreeNode(nodeTitle.c_str())) {
-						UI::SphereConfiguration(*sphere, m_Scene.Materials.size() - 1);
+						UI::SphereConfiguration(*sphere, m_Scene.Materials);
 
 						if (ImGui::Button("[X] Delete Sphere"))
 							m_Scene.Spheres.erase(sphere);
@@ -187,6 +177,16 @@ namespace RayMan {
 
 			m_Scene.SkyLightBaseColor = {0.1f, 0.2f, 0.7f};
 			m_Scene.SkyLightBaseColor = {0.4f, 0.5f, 0.9f};
+
+			Renderer::RenderPipeline pipeline;
+			Renderer::Settings settings;
+			settings.Accumulate = true;
+			settings.Antialising = true;
+			settings.CastShadows = true;
+			settings.Bounce = 10;
+			pipeline.Settings = settings;
+			pipeline.FrameLimit = 150;
+			m_RenderPipelines.push_back(pipeline);
 		}
 
 		virtual void OnUpdate(float ts) override {
@@ -200,8 +200,16 @@ namespace RayMan {
 			m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
 			m_Camera.OnResize(m_ViewportWidth, m_ViewportHeight);
 			m_Renderer.Render(m_Scene, m_Camera);
+			if (m_StaticRenderInProgress) {
+				m_Renderer.RenderWithPipeline(m_Scene, m_Camera, m_RenderPipelines[m_CurrentRenderPipeline]);
+				if (m_Renderer.FrameIndex() == 1)
+					m_StaticRenderInProgress = false;
 
-			m_LastRenderTime = timer.ElapsedMillis();
+				m_LastRenderTime += timer.ElapsedMillis();
+			} else {
+				m_Renderer.Render(m_Scene, m_Camera);
+				m_LastRenderTime = timer.ElapsedMillis();
+			}
 		}
 
 	private:
@@ -210,6 +218,10 @@ namespace RayMan {
 		Renderer m_Renderer;
 		Camera m_Camera;
 		Scene m_Scene;
+
+		std::vector<Renderer::RenderPipeline> m_RenderPipelines;
+		int m_CurrentRenderPipeline{0};
+		bool m_StaticRenderInProgress{false};
 	};
 }
 

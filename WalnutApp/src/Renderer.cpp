@@ -4,6 +4,8 @@
 
 #include <Walnut/Random.h>
 
+#include "FileIO.h"
+
 
 
 namespace RayMan {
@@ -55,7 +57,7 @@ namespace RayMan {
 	}
 
 	void Renderer::Render(const Scene& scene, const Camera& camera) {
-		if (m_Settings.Pause)
+		if (m_ActiveSettings->Pause)
 			return;
 
 		m_ActiveCamera = &camera;
@@ -95,7 +97,7 @@ namespace RayMan {
 
 		m_FinalImage->SetData(m_FinalImageData);
 
-		if (m_Settings.Accumulate) {
+		if (m_ActiveSettings->Accumulate) {
 			m_FrameIndex++;
 		} else {
 			m_FrameIndex = 1;
@@ -105,11 +107,24 @@ namespace RayMan {
 		m_ActiveScene = nullptr;
 	}
 
+	void Renderer::RenderWithPipeline(const Scene& scene, const Camera& camera, RenderPipeline& pipeline) {
+		m_ActiveSettings = &pipeline.Settings;
+		if (m_FrameIndex >= pipeline.FrameLimit) {
+			m_ActiveSettings = &m_EditorSettings;
+			m_ActiveSettings->Pause = true;
+			ResetFrameAccumulation();
+
+			RayMan::FileIO::WriteImage(pipeline.Filename, m_FinalImage->GetWidth(), m_FinalImage->GetHeight(), m_FinalImageData);
+		}
+
+		Render(scene, camera);
+	}
+
 	glm::vec4 Renderer::RayGen(uint32_t x, uint32_t y) {
 		Ray ray;
 		ray.Origin = m_ActiveCamera->Position();
 		ray.Direction = m_ActiveCamera->RayDirections()[x + y * m_FinalImage->GetWidth()];
-		if (m_Settings.Antialising)
+		if (m_ActiveSettings->Antialising)
 			ray.Direction += Walnut::Random::Vec3(-0.001f, 0.001f);
 
 		glm::vec3 color{};
@@ -118,7 +133,7 @@ namespace RayMan {
 		glm::vec3 skyLightBaseColor{m_ActiveScene->SkyLightBaseColor};
 		glm::vec3 skyLightSecondaryColor{m_ActiveScene->SkyLightSecondaryColor};
 
-		int bounces{m_Settings.Bounce};
+		int bounces{m_ActiveSettings->Bounce};
 		for (int i{0}; i < bounces; i++) {
 			glm::vec3 tempColor{0.0f};
 
@@ -139,7 +154,7 @@ namespace RayMan {
 
 
 			for (const auto& light : m_ActiveScene->DirectionalLights) {
-				if (m_Settings.CastShadows && CheckShadow(payload.WorldPosition, light))
+				if (m_ActiveSettings->CastShadows && CheckShadow(payload.WorldPosition, light))
 					continue;
 
 				auto lightDir = light.Direction();

@@ -24,17 +24,24 @@ namespace RayMan {
 			int Bounce = 2;
 		};
 
+		struct RenderPipeline {
+			Settings Settings;
+			int FrameLimit;
+			std::string Filename{"image.ppm"};
+		};
+
 	public:
 		Renderer() = default;
 
 		void OnResize(uint32_t width, uint32_t height);
 		void Render(const Scene& scene, const Camera& camera);
+		void RenderWithPipeline(const Scene& scene, const Camera& camera, RenderPipeline& pipeline);
 
 		inline const std::shared_ptr<Walnut::Image>& GetFinalImage() const { return m_FinalImage; }
 		inline const uint32_t* GetImageData() const { return m_FinalImageData; }
 		inline uint32_t FrameIndex() const { return m_FrameIndex; }
 		inline void ResetFrameAccumulation() { m_FrameIndex = 1; }
-		inline Settings& GetSettings() { return m_Settings; }
+		inline Settings& GetSettings() { return m_EditorSettings; }
 
 	private:
 		struct HitPayload {
@@ -59,7 +66,8 @@ namespace RayMan {
 		uint32_t* m_FinalImageData{nullptr};
 		glm::vec4* m_AccumulationData{nullptr};
 		uint32_t m_FrameIndex{0};
-		Settings m_Settings;
+		Settings m_EditorSettings;
+		Settings* m_ActiveSettings{&m_EditorSettings};
 
 		std::vector<uint32_t> m_HorizontalIter, m_VerticalIter;
 	};
