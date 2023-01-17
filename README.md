@@ -13,4 +13,4 @@ UI screenshots:
 ![image](https://user-images.githubusercontent.com/80068087/212997772-71f03671-e368-4998-b6a2-bfe3b139caa0.png)
 
 ## Acknowledgements
-I'm using [Walnut](https://github.com/TheCherno/RayTracing) by [The Cherno](https://github.com/TheCherno) for the UI and as overall template for an app. Please check its repository to learn more about dependencies and other stuff used in this app, as I didn't add new dependencies to the project
+I'm using [Walnut](https://github.com/TheCherno/Walnut) by [The Cherno](https://github.com/TheCherno) for the UI and as overall template for an app. Please check its repository to learn more about dependencies and other stuff used in this app, as I didn't add new dependencies to the project
