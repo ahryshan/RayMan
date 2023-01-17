@@ -1,24 +1,16 @@
-# Walnut
+# RayMan
+Semi-realtime rayTracer
+---
+My student project for the University.
 
-Walnut is a simple application framework built with Dear ImGui and designed to be used with Vulkan - basically this means you can seemlessly blend real-time Vulkan rendering with a great UI library to build desktop applications. The plan is to expand Walnut to include common utilities to make immediate-mode desktop apps and simple Vulkan applications.
+This is some samples of possible renders with this tool:
+![image-3](https://user-images.githubusercontent.com/80068087/212997069-ddb3058c-9ee0-40a8-b091-dfb6cf75e3a1.jpg)
+![image-1](https://user-images.githubusercontent.com/80068087/212997077-e29483f7-99ad-4fb4-bd06-9bfab7791dfc.jpeg)
+![image-2](https://user-images.githubusercontent.com/80068087/212997081-6ebf3101-dca9-4dd7-a73b-d31624788241.jpg)
 
-Currently supports Windows - with macOS and Linux support planned. Setup scripts support Visual Studio 2022 by default.
+UI screenshots:
+![image](https://user-images.githubusercontent.com/80068087/212997450-d028ff25-1318-4380-b6be-a1670139c8a1.png)
+![image](https://user-images.githubusercontent.com/80068087/212997772-71f03671-e368-4998-b6a2-bfe3b139caa0.png)
 
-![WalnutExample](https://hazelengine.com/images/ForestLauncherScreenshot.jpg)
-_<center>Forest Launcher - an application made with Walnut</center>_
-
-## Requirements
-- [Visual Studio 2022](https://visualstudio.com) (not strictly required, however included setup scripts only support this)
-- [Vulkan SDK](https://vulkan.lunarg.com/sdk/home#windows) (preferably a recent version)
-
-## Getting Started
-Once you've cloned, run `scripts/Setup.bat` to generate Visual Studio 2022 solution/project files. Once you've opened the solution, you can run the WalnutApp project to see a basic example (code in `WalnutApp.cpp`). I recommend modifying that WalnutApp project to create your own application, as everything should be setup and ready to go.
-
-### 3rd party libaries
-- [Dear ImGui](https://github.com/ocornut/imgui)
-- [GLFW](https://github.com/glfw/glfw)
-- [stb_image](https://github.com/nothings/stb)
-- [GLM](https://github.com/g-truc/glm) (included for convenience)
-
-### Additional
-- Walnut uses the [Roboto](https://fonts.google.com/specimen/Roboto) font ([Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0))
+## Acknowledgements
+I'm using [Walnut](https://github.com/TheCherno/RayTracing) by [The Cherno](https://github.com/TheCherno) for the UI and as overall template for an app. Please check its repository to learn more about dependencies and other stuff used in this app, as I didn't add new dependencies to the project
