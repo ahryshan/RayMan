@@ -19,6 +19,8 @@
 // Emedded font
 #include "ImGui/Roboto-Regular.embed"
 
+#include "stb_image.h"
+
 extern bool g_ApplicationRunning;
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
@@ -416,6 +418,14 @@ namespace Walnut {
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		m_WindowHandle = glfwCreateWindow(m_Specification.Width, m_Specification.Height, m_Specification.Name.c_str(), NULL, NULL);
+		
+		{
+			GLFWimage windowIcons[1];
+			windowIcons[0].pixels = stbi_load("logo.png", &windowIcons[0].width, &windowIcons[0].height, 0, 4);
+			glfwSetWindowIcon(m_WindowHandle, 1, windowIcons);
+			stbi_image_free(windowIcons[0].pixels);
+		}
+
 
 		// Setup Vulkan
 		if (!glfwVulkanSupported())
