@@ -231,7 +231,7 @@ namespace RayMan {
 
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv) {
 	Walnut::ApplicationSpecification spec;
-	spec.Name = "RayMan Raytracer";
+	spec.Name = "RayMan Raytracer v1.0.0pre";
 
 	Walnut::Application* app = new Walnut::Application(spec);
 	std::shared_ptr<RayMan::RayManLayer> layer = std::make_shared<RayMan::RayManLayer>();
