@@ -27,7 +27,6 @@ namespace RayMan {
 		struct RenderPipeline {
 			Settings Settings;
 			int FrameLimit;
-			std::string Filename{"image.ppm"};
 		};
 
 	public:

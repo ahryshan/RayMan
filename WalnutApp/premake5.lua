@@ -1,16 +1,17 @@
 project "WalnutApp"
    kind "ConsoleApp"
    language "C++"
-   cppdialect "C++17"
+   cppdialect "C++20"
    targetdir "bin/%{cfg.buildcfg}"
    staticruntime "off"
 
-   files { "src/**.h", "src/**.cpp" }
+   files { "src/**.h", "src/**.cpp", "../vendor/jsoncpp/**.h", "../vendor/jsoncpp/**.cpp" }
 
    includedirs
    {
       "../vendor/imgui",
       "../vendor/glfw/include",
+      "../vendor/jsoncpp",
 
       "../Walnut/src",
 

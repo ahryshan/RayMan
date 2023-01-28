@@ -43,9 +43,7 @@ namespace RayMan::UI {
 		if (ImGui::Button("Reset Render")) {
 			renderer.ResetFrameAccumulation();
 		}
-		if (ImGui::Button("Export Image")) {
-			::RayMan::FileIO::WriteImage("image.ppm", renderer.GetFinalImage()->GetWidth(), renderer.GetFinalImage()->GetHeight(), renderer.GetImageData());
-		}
+
 		ImGui::BeginHorizontal(1);
 
 		bool pipelineConfigDisabled = staticRender;
@@ -59,12 +57,16 @@ namespace RayMan::UI {
 		if (pipelineConfigDisabled)
 			ImGui::BeginDisabled();
 
-		GenericCombo(pipelines, selectedPipelineIndex, "Render Pipeline", "Pipeline");
+		GenericCombo(pipelines, selectedPipelineIndex, "", "Pipeline");
 
 		if (pipelineConfigDisabled)
 			ImGui::EndDisabled();
 
 		ImGui::EndHorizontal();
+
+		if (staticRender) {
+			ImGui::ProgressBar((float)renderer.FrameIndex() / (float)pipelines[selectedPipelineIndex].FrameLimit);
+		}
 
 		if (ImGui::TreeNode("Render Pipelines")) {
 			for (int i{0}; i < pipelines.size(); i++) {
@@ -115,7 +117,5 @@ namespace RayMan::UI {
 	void MaterialConfiguration(Material& material) {
 		ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo));
 		ImGui::DragFloat("Roughness", &material.Roughness, 0.01f, 0.0f, 1.0f, "%.2f");
-		ImGui::DragFloat("Metallic", &material.Metallic, 0.01f, 0.0f, 1.0f, "%.2f");
-
 	}
 }

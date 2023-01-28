@@ -113,8 +113,6 @@ namespace RayMan {
 			m_ActiveSettings = &m_EditorSettings;
 			m_ActiveSettings->Pause = true;
 			ResetFrameAccumulation();
-
-			RayMan::FileIO::WriteImage(pipeline.Filename, m_FinalImage->GetWidth(), m_FinalImage->GetHeight(), m_FinalImageData);
 		}
 
 		Render(scene, camera);

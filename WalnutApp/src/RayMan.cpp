@@ -212,6 +212,10 @@ namespace RayMan {
 			}
 		}
 
+		inline Scene& GetScene() { return m_Scene; }
+		inline std::vector<Renderer::RenderPipeline>& GetPipelines() { return m_RenderPipelines; }
+		inline const Renderer& GetRenderer() const { return m_Renderer; }
+
 	private:
 		float m_LastRenderTime{0};
 		uint32_t m_ViewportWidth{0}, m_ViewportHeight{0};
@@ -230,12 +234,33 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv) {
 	spec.Name = "RayMan Raytracer";
 
 	Walnut::Application* app = new Walnut::Application(spec);
-	app->PushLayer<RayMan::RayManLayer>();
-	app->SetMenubarCallback([app]() {
+	std::shared_ptr<RayMan::RayManLayer> layer = std::make_shared<RayMan::RayManLayer>();
+
+	app->PushLayer(layer);
+	app->SetMenubarCallback([app, layer]() {
 
 		if (ImGui::BeginMenu("File")) {
-			if (ImGui::MenuItem("Exit")) {
-				app->Close();
+			if (ImGui::MenuItem("Export Image")) {
+				std::wstring wFilename = RayMan::FileIO::SaveFileDialog(L"PPM image (*.ppm)\0*.ppm\0", L"ppm");
+				auto& renderer = layer->GetRenderer();
+				auto& image = renderer.GetFinalImage();
+				RayMan::FileIO::WriteImage(RayMan::FileIO::ConvertToStr(wFilename), image->GetWidth(), image->GetHeight(), renderer.GetImageData());
+			}
+			if (ImGui::MenuItem("Save Scene")) {
+				std::wstring wFilename = RayMan::FileIO::SaveFileDialog(L"Json\0*.json\0", L"json\0");
+				RayMan::FileIO::SaveScene(RayMan::FileIO::ConvertToStr(wFilename), layer->GetScene());
+			}
+			if (ImGui::MenuItem("Load Scene")) {
+				std::wstring wFilename = RayMan::FileIO::OpenFileDialog(L"Json\0*.json\0");
+				RayMan::FileIO::LoadScene(RayMan::FileIO::ConvertToStr(wFilename), layer->GetScene());
+			}
+			if (ImGui::MenuItem("Save Pipelines")) {
+				std::wstring wFilename = RayMan::FileIO::SaveFileDialog(L"Json\0*.json\0", L"json\0");
+				RayMan::FileIO::SaveRenderPipelines(RayMan::FileIO::ConvertToStr(wFilename), layer->GetPipelines());
+			}
+			if (ImGui::MenuItem("Load Pipelines")) {
+				std::wstring wFilename = RayMan::FileIO::OpenFileDialog(L"Json\0*.json\0");
+				RayMan::FileIO::LoadRenderPipelines(RayMan::FileIO::ConvertToStr(wFilename), layer->GetPipelines());
 			}
 			ImGui::EndMenu();
 		}
