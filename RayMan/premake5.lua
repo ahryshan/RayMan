@@ -1,4 +1,5 @@
-project "WalnutApp"
+project "RayMan"
+   icon("icon.ico")
    kind "ConsoleApp"
    language "C++"
    cppdialect "C++20"
